@@ -10,7 +10,7 @@ let EventEmitter = require('events').EventEmitter;
 let Console = require('dvp-mongomodels/model/Console');
 let messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 let deepcopy = require('deepcopy');
-let async = require('async');
+
 
 let asyncCollectResources = function(resourceName, callback)
 {
@@ -54,7 +54,29 @@ class SqlFactory {
         });
     }
 
-    ValidateConsoles(consoles){
+    ValidateConsoles(consoles)
+    {
+        if(consoles && consoles.length > 0)
+        {
+            let query =
+                {
+                    where: {$or:[]}
+                };
+
+            for(let console of consoles)
+            {
+                let tempObj = {
+                    name: console
+                };
+                query.where.$or.push(tempObj);
+            }
+
+
+        }
+
+
+
+
         let e = new EventEmitter();
         process.nextTick(function () {
             if (Array.isArray(consoles)) {
@@ -85,69 +107,223 @@ class SqlFactory {
 
 //---------------------------------Package---------------------------------------------------------------
 
+    //DONE
     GetPackages(req, res){
         logger.debug("DVP-UserService.GetPackages Internal method ");
 
         let jsonString;
         let query =
             {
+                attributes: [['name', 'packageName'],['name', 'packageType'],['navigation_type','navigationType'],['setup_fee','setupFee'],'price',['billing_type','billingType']],
                 include: [
                     {
-                        model: dbModel.PackageConsoleAccessLimit
+                        model: dbModel.Console,
+                        as: 'Consoles'
+                    },
+                    {
+                        model: dbModel.UserRoles,
+                        as: 'UserRoles'
+                    },
+                    {
+                        model: dbModel.ResTaskInfo,
+                        as: 'Tasks'
                     }
                 ]
             };
-        dbModel.Package.findAll(query, function(err, vPackages) {
-            if (err) {
-                jsonString = messageFormatter.FormatMessage(err, "Get Packages Failed", false, undefined);
-            }else{
-                jsonString = messageFormatter.FormatMessage(err, "Get Packages Successful", true, vPackages);
+        dbModel.Package.findAll(query).then(function(vPackages)
+        {
+            vPackages = JSON.parse(JSON.stringify(vPackages));
+            if(vPackages)
+            {
+                for(let pkg of vPackages)
+                {
+                    let tempConsoleArr = [];
+                    let tempVeeryTaskArr = [];
+                    let tempUsrRoles = [];
+                    if(pkg.Consoles)
+                    {
+                        tempConsoleArr = pkg.Consoles.map(console => {
+                            return console.name;
+                        });
+                    }
+
+                    delete pkg.Consoles;
+                    pkg.consoles = tempConsoleArr;
+
+                    if(pkg.Tasks)
+                    {
+                        tempVeeryTaskArr = pkg.Tasks.map(task => {
+                            return task.TaskType;
+                        });
+                    }
+
+                    delete pkg.Tasks;
+                    pkg.veeryTask = tempVeeryTaskArr;
+
+                    if(pkg.UserRoles)
+                    {
+                        tempUsrRoles = pkg.UserRoles.map(role => {
+
+                            let tempObj = {
+                                accessType: role.name,
+                                accessLimit: 0
+                            };
+
+                            if(role.PackageUserRoleCreateLimit && role.PackageUserRoleCreateLimit && role.PackageUserRoleCreateLimit.access_limit)
+                            {
+                                tempObj.accessLimit = role.PackageUserRoleCreateLimit.access_limit;
+                            }
+
+                            return tempObj;
+                        });
+                    }
+
+                    delete pkg.UserRoles;
+                    pkg.consoleAccessLimit = tempUsrRoles;
+                }
+
             }
+
+            jsonString = messageFormatter.FormatMessage(null, "Get Packages Successful", true, vPackages);
             res.end(jsonString);
+
+        }).catch(function(err)
+        {
+            jsonString = messageFormatter.FormatMessage(err, "Get Packages Failed", false, undefined);
+            res.end(jsonString);
+
         });
     }
 
-
+    //DONE
     GetPackage(req, res){
         logger.debug("DVP-UserService.GetPackage Internal method ");
+
         let jsonString;
-        VPackage.findOne({packageName: req.params.packageName}, function(err, vPackage) {
-            if (err) {
-                jsonString = messageFormatter.FormatMessage(err, "Get Package Failed", false, undefined);
-            }else{
-                jsonString = messageFormatter.FormatMessage(err, "Get Package Successful", true, vPackage);
+        let query =
+            {
+                where: {name: req.params.packageName},
+                attributes: [['name', 'packageName'],['name', 'packageType'],['navigation_type','navigationType'],['setup_fee','setupFee'],'price',['billing_type','billingType']],
+                include: [
+                    {
+                        model: dbModel.Console,
+                        as: 'Consoles'
+                    },
+                    {
+                        model: dbModel.UserRoles,
+                        as: 'UserRoles'
+                    },
+                    {
+                        model: dbModel.ResTaskInfo,
+                        as: 'Tasks'
+                    }
+                ]
+            };
+        dbModel.Package.find(query).then(function(VPackage)
+        {
+            VPackage = JSON.parse(JSON.stringify(VPackage));
+            if(VPackage)
+            {
+                let tempConsoleArr = [];
+                let tempVeeryTaskArr = [];
+                let tempUsrRoles = [];
+                if(VPackage.Consoles)
+                {
+                    tempConsoleArr = VPackage.Consoles.map(console => {
+                        return console.name;
+                    });
+                }
+
+                delete VPackage.Consoles;
+                VPackage.consoles = tempConsoleArr;
+
+                if(VPackage.Tasks)
+                {
+                    tempVeeryTaskArr = VPackage.Tasks.map(task => {
+                        return task.TaskType;
+                    });
+                }
+
+                delete VPackage.Tasks;
+                VPackage.veeryTask = tempVeeryTaskArr;
+
+                if(VPackage.UserRoles)
+                {
+                    tempUsrRoles = VPackage.UserRoles.map(role => {
+
+                        let tempObj = {
+                            accessType: role.name,
+                            accessLimit: 0
+                        };
+
+                        if(role.PackageUserRoleCreateLimit && role.PackageUserRoleCreateLimit && role.PackageUserRoleCreateLimit.access_limit)
+                        {
+                            tempObj.accessLimit = role.PackageUserRoleCreateLimit.access_limit;
+                        }
+
+                        return tempObj;
+                    });
+                }
+
+                delete VPackage.UserRoles;
+                VPackage.consoleAccessLimit = tempUsrRoles;
+
             }
+
+            jsonString = messageFormatter.FormatMessage(null, "Get Packages Successful", true, VPackage);
+            res.end(jsonString);
+
+        }).catch(function(err)
+        {
+            jsonString = messageFormatter.FormatMessage(err, "Get Packages Failed", false, undefined);
+            res.end(jsonString);
+
+        });
+
+    }
+
+    //DONE
+    DeletePackage(req,res){
+        logger.debug("DVP-UserService.DeletePackage Internal method ");
+        let jsonString;
+        let query =
+            {
+                where: {name: req.params.packageName}
+            };
+
+        dbModel.Package.destroy(query).then(function(result)
+        {
+            jsonString = messageFormatter.FormatMessage(undefined, "Package successfully deleted", true, undefined);
+            res.end(jsonString);
+
+        }).catch(function(err)
+        {
+            jsonString = messageFormatter.FormatMessage(err, "Delete Package Failed", false, undefined);
             res.end(jsonString);
         });
     }
 
-    DeletePackage(req,res){
-        logger.debug("DVP-UserService.DeletePackage Internal method ");
+    CreatePackage(req, res)
+    {
+        logger.debug("DVP-UserService.CreateResource Internal method ");
 
-        let jsonString;
-        VPackage.findOne({packageName: req.params.packageName}, function (err, vPackage) {
-            if (err) {
-                jsonString = messageFormatter.FormatMessage(err, "Get Package Failed", false, undefined);
-                res.end(jsonString);
-            } else {
-                if (vPackage) {
-                    vPackage.remove(function (err) {
-                        if (err) {
-                            jsonString = messageFormatter.FormatMessage(err, "Delete Package Failed", false, undefined);
-                        } else {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Package successfully deleted", true, undefined);
-                        }
-                        res.end(jsonString);
-                    });
-                } else {
-                    jsonString = messageFormatter.FormatMessage(undefined, "Delete Package Failed, package object is null", false, undefined);
-                    res.end(jsonString);
-                }
-            }
-        });
-    }
+        //NEED TO VALIDATE EVERYTHING FIRST BEFORE SAVING
 
-    CreatePackage(req, res){
+        //VALIDATE CONSOLES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         logger.debug("DVP-UserService.CreateResource Internal method ");
         let jsonString;
 

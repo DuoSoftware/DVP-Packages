@@ -18,6 +18,12 @@ class BackendFactory {
     };
 }
 
-new sqlFactory().GetPackages('ss', 'ff');
+let req = {
+    params: {
+        packageName: 'JELLYFISH'
+    }
+};
+//new mongoFactory.MongoFactory().GetPackage(req, 'ff');
+new sqlFactory.SqlFactory().DeletePackage(req, 'ff');
 
 module.exports.BackendFactory = BackendFactory;

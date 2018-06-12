@@ -1,9 +1,12 @@
 'use strict';
 
 let restify = require('restify');
+let mongomodels = require('dvp-mongomodels');
 let config = require('config');
-let mongoose = require('mongoose');
 let util = require('util');
+let jwt = require('restify-jwt');
+let secret = require('dvp-common-lite/Authentication/Secret.js');
+var authorization = require('dvp-common-lite/Authentication/Authorization.js');
 let BackendFactory = require('./BackendFactory.js').BackendFactory;
 
 const hostIp = config.Host.vdomain;
@@ -25,7 +28,7 @@ server.use(restify.queryParser());
 server.use(restify.bodyParser());
 
 
-let mongoip=config.Mongo.ip;
+/*let mongoip=config.Mongo.ip;
 const mongoport=config.Mongo.port;
 const mongodb=config.Mongo.dbname;
 const mongouser=config.Mongo.user;
@@ -94,80 +97,79 @@ process.on('SIGINT', function() {
         console.log('Mongoose default connection disconnected through app termination');
         process.exit(0);
     });
-});
+});*/
 
 //API METHODS GO HERE
 
-app.get('/DVP/API/:version/Organisation/Name/:tenant/:company', jwt({secret: secret.Secret}),authorization({resource:"myUserProfile", action:"read"}), organisationService.GetOrganisationName);
-app.get('/DVP/API/:version/Organisations', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"read"}), organisationService.GetOrganisations);
-app.get('/DVP/API/:version/Organisations/:page/:size', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"read"}), organisationService.GetOrganisationsWithPaging);
-app.get('/DVP/API/:version/Organisation', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"read"}), organisationService.GetOrganisation);
-app.delete('/DVP/API/:version/Organisation', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"delete"}), organisationService.DeleteOrganisation);
-app.put('/DVP/API/:version/Organisation/Activate/:state', jwt({secret: secret.Secret}),authorization({resource:"organisationManage", action:"write"}), organisationService.ActivateOrganisation);
+/*server.get('/DVP/API/:version/Organisation/Name/:tenant/:company', jwt({secret: secret.Secret}),authorization({resource:"myUserProfile", action:"read"}), organisationService.GetOrganisationName);
+server.get('/DVP/API/:version/Organisations', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"read"}), organisationService.GetOrganisations);
+server.get('/DVP/API/:version/Organisations/:page/:size', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"read"}), organisationService.GetOrganisationsWithPaging);
+server.get('/DVP/API/:version/Organisation', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"read"}), organisationService.GetOrganisation);
+server.delete('/DVP/API/:version/Organisation', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"delete"}), organisationService.DeleteOrganisation);
+server.put('/DVP/API/:version/Organisation/Activate/:state', jwt({secret: secret.Secret}),authorization({resource:"organisationManage", action:"write"}), organisationService.ActivateOrganisation);
 
-app.get('/DVP/API/:version/Organization/:company/exists', organisationService.IsOrganizationExists);
+server.get('/DVP/API/:version/Organization/:company/exists', organisationService.IsOrganizationExists);
 
-//app.post('/DVP/API/:version/Organisation/Owner', organisationService.CreateOwner);
-app.put('/DVP/API/:version/Organisation', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"write"}), organisationService.UpdateOrganisation);
-app.put('/DVP/API/:version/Organisation/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"write"}), organisationService.AssignPackageToOrganisation);
-app.delete('/DVP/API/:version/Organisation/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"write"}), organisationService.RemovePackageFromOrganisation);
-app.get('/DVP/API/:version/MyOrganization/mypackages', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), organisationService.GetOrganisationPackages);
-app.get('/DVP/API/:version/Organisation/billingInformation', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), organisationService.GetBillingDetails);
+server.put('/DVP/API/:version/Organisation', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"write"}), organisationService.UpdateOrganisation);
+server.put('/DVP/API/:version/Organisation/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"write"}), organisationService.AssignPackageToOrganisation);
+server.delete('/DVP/API/:version/Organisation/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"write"}), organisationService.RemovePackageFromOrganisation);
+server.get('/DVP/API/:version/MyOrganization/mypackages', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), organisationService.GetOrganisationPackages);
+server.get('/DVP/API/:version/Organisation/billingInformation', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), organisationService.GetBillingDetails);
 
-app.put('/DVP/API/:version/Organisation/Package/:packageName/Unit/:unitName/:topUpCount', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"write"}), organisationService.AssignPackageUnitToOrganisation);
+server.put('/DVP/API/:version/Organisation/Package/:packageName/Unit/:unitName/:topUpCount', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"write"}), organisationService.AssignPackageUnitToOrganisation);
 
-app.get('/DVP/API/:version/Organisation/SpaceLimit/:spaceType', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"read"}), organisationService.GetSpaceLimit);
-app.get('/DVP/API/:version/Organisation/SpaceLimits/:spaceType', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"read"}), organisationService.GetSpaceLimitForTenant);
+server.get('/DVP/API/:version/Organisation/SpaceLimit/:spaceType', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"read"}), organisationService.GetSpaceLimit);
+server.get('/DVP/API/:version/Organisation/SpaceLimits/:spaceType', jwt({secret: secret.Secret}),authorization({resource:"organisation", action:"read"}), organisationService.GetSpaceLimitForTenant);
 
-app.get('/DVP/API/:version/Resources', jwt({secret: secret.Secret}),authorization({resource:"resource", action:"read"}), resourceService.GetResources);
-app.get('/DVP/API/:version/Resource/:resourceName', jwt({secret: secret.Secret}),authorization({resource:"resource", action:"read"}), resourceService.GetResource);
-app.delete('/DVP/API/:version/Resource/:resourceName', jwt({secret: secret.Secret}),authorization({resource:"resource", action:"delete"}), resourceService.DeleteResource);
-app.post('/DVP/API/:version/Resource', jwt({secret: secret.Secret}),authorization({resource:"resource", action:"write"}), resourceService.CreateResource);
-app.put('/DVP/API/:version/Resource/:resourceName', jwt({secret: secret.Secret}),authorization({resource:"resource", action:"write"}), resourceService.UpdateResource);
+server.get('/DVP/API/:version/Resources', jwt({secret: secret.Secret}),authorization({resource:"resource", action:"read"}), resourceService.GetResources);
+server.get('/DVP/API/:version/Resource/:resourceName', jwt({secret: secret.Secret}),authorization({resource:"resource", action:"read"}), resourceService.GetResource);
+server.delete('/DVP/API/:version/Resource/:resourceName', jwt({secret: secret.Secret}),authorization({resource:"resource", action:"delete"}), resourceService.DeleteResource);
+server.post('/DVP/API/:version/Resource', jwt({secret: secret.Secret}),authorization({resource:"resource", action:"write"}), resourceService.CreateResource);
+server.put('/DVP/API/:version/Resource/:resourceName', jwt({secret: secret.Secret}),authorization({resource:"resource", action:"write"}), resourceService.UpdateResource);
 
-app.get('/DVP/API/:version/Packages', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), packageService.GetPackages);
-app.get('/DVP/API/:version/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), packageService.GetPackage);
-app.delete('/DVP/API/:version/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"delete"}), packageService.DeletePackage);
-app.post('/DVP/API/:version/Package', jwt({secret: secret.Secret}),authorization({resource:"package", action:"write"}), packageService.CreatePackage);
-app.put('/DVP/API/:version/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"write"}), packageService.UpdatePackage);
+server.get('/DVP/API/:version/Packages', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), packageService.GetPackages);
+server.get('/DVP/API/:version/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), packageService.GetPackage);
+server.delete('/DVP/API/:version/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"delete"}), packageService.DeletePackage);
+server.post('/DVP/API/:version/Package', jwt({secret: secret.Secret}),authorization({resource:"package", action:"write"}), packageService.CreatePackage);
+server.put('/DVP/API/:version/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"write"}), packageService.UpdatePackage);
 
-app.get('/DVP/API/:version/PackageUnits', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), packageService.GetPackageUnits);
-app.get('/DVP/API/:version/PackageUnit/:unitName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), packageService.GetPackageUnit);
-app.delete('/DVP/API/:version/PackageUnit/:unitName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"delete"}), packageService.DeletePackageUnit);
-app.post('/DVP/API/:version/PackageUnit', jwt({secret: secret.Secret}),authorization({resource:"package", action:"write"}), packageService.CreatePackageUnit);
-app.put('/DVP/API/:version/PackageUnit/:unitName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"write"}), packageService.UpdatePackageUnit);
-
+server.get('/DVP/API/:version/PackageUnits', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), packageService.GetPackageUnits);
+server.get('/DVP/API/:version/PackageUnit/:unitName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"read"}), packageService.GetPackageUnit);
+server.delete('/DVP/API/:version/PackageUnit/:unitName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"delete"}), packageService.DeletePackageUnit);
+server.post('/DVP/API/:version/PackageUnit', jwt({secret: secret.Secret}),authorization({resource:"package", action:"write"}), packageService.CreatePackageUnit);
+server.put('/DVP/API/:version/PackageUnit/:unitName', jwt({secret: secret.Secret}),authorization({resource:"package", action:"write"}), packageService.UpdatePackageUnit);
 
 
-app.get('/DVP/API/:version/Consoles', jwt({secret: secret.Secret}),authorization({resource:"console", action:"read"}), navigationService.GetAllConsoles);
-app.get('/DVP/API/:version/Consoles/:roleType', jwt({secret: secret.Secret}),authorization({resource:"console", action:"read"}), navigationService.GetAllConsolesByUserRole);
-app.get('/DVP/API/:version/Console/:consoleName', jwt({secret: secret.Secret}),authorization({resource:"console", action:"read"}), navigationService.GetConsole);
-app.delete('/DVP/API/:version/Console/:consoleName', jwt({secret: secret.Secret}),authorization({resource:"console", action:"delete"}), navigationService.DeleteConsole);
-app.post('/DVP/API/:version/Console', jwt({secret: secret.Secret}),authorization({resource:"console", action:"write"}), navigationService.CreateConsole);
-app.put('/DVP/API/:version/Console/:consoleName', jwt({secret: secret.Secret}),authorization({resource:"console", action:"write"}), navigationService.UpdateConsole);
-app.put('/DVP/API/:version/Console/:consoleName/Navigation', jwt({secret: secret.Secret}),authorization({resource:"console", action:"write"}), navigationService.AddNavigationToConsole);
-app.delete('/DVP/API/:version/Console/:consoleName/Navigation/:navigationName', jwt({secret: secret.Secret}),authorization({resource:"console", action:"write"}), navigationService.RemoveNavigationFromConsole);
 
-app.post('/DVP/API/:version/Tenant',jwt({secret: secret.Secret}), authorization({resource:"userGroup", action:"write"}), tenantService.CreateTenant);
-app.get('/DVP/API/:version/Tenants',jwt({secret: secret.Secret}), authorization({resource:"userGroup", action:"read"}), tenantService.GetAllTenants);
-app.get('/DVP/API/:version/Tenant/:id',jwt({secret: secret.Secret}), authorization({resource:"userGroup", action:"read"}), tenantService.GetTenant);
-app.get('/DVP/API/:version/CompanyDomain/:companyname',jwt({secret: secret.Secret}), authorization({resource:"userGroup", action:"read"}), tenantService.GetCompanyDomain);
+server.get('/DVP/API/:version/Consoles', jwt({secret: secret.Secret}),authorization({resource:"console", action:"read"}), navigationService.GetAllConsoles);
+server.get('/DVP/API/:version/Consoles/:roleType', jwt({secret: secret.Secret}),authorization({resource:"console", action:"read"}), navigationService.GetAllConsolesByUserRole);
+server.get('/DVP/API/:version/Console/:consoleName', jwt({secret: secret.Secret}),authorization({resource:"console", action:"read"}), navigationService.GetConsole);
+server.delete('/DVP/API/:version/Console/:consoleName', jwt({secret: secret.Secret}),authorization({resource:"console", action:"delete"}), navigationService.DeleteConsole);
+server.post('/DVP/API/:version/Console', jwt({secret: secret.Secret}),authorization({resource:"console", action:"write"}), navigationService.CreateConsole);
+server.put('/DVP/API/:version/Console/:consoleName', jwt({secret: secret.Secret}),authorization({resource:"console", action:"write"}), navigationService.UpdateConsole);
+server.put('/DVP/API/:version/Console/:consoleName/Navigation', jwt({secret: secret.Secret}),authorization({resource:"console", action:"write"}), navigationService.AddNavigationToConsole);
+server.delete('/DVP/API/:version/Console/:consoleName/Navigation/:navigationName', jwt({secret: secret.Secret}),authorization({resource:"console", action:"write"}), navigationService.RemoveNavigationFromConsole);
+
+server.post('/DVP/API/:version/Tenant',jwt({secret: secret.Secret}), authorization({resource:"userGroup", action:"write"}), tenantService.CreateTenant);
+server.get('/DVP/API/:version/Tenants',jwt({secret: secret.Secret}), authorization({resource:"userGroup", action:"read"}), tenantService.GetAllTenants);
+server.get('/DVP/API/:version/Tenant/:id',jwt({secret: secret.Secret}), authorization({resource:"userGroup", action:"read"}), tenantService.GetTenant);
+server.get('/DVP/API/:version/CompanyDomain/:companyname',jwt({secret: secret.Secret}), authorization({resource:"userGroup", action:"read"}), tenantService.GetCompanyDomain);
 
 
-app.post('/DVP/API/:version/Codec',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"write"}), packageService.CreateCodec);
-app.put('/DVP/API/:version/Codec/:codec',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"write"}), packageService.UpdateCodec);
-app.delete('/DVP/API/:version/Codec/:codec',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"delete"}), packageService.DeleteCodec);
-app.get('/DVP/API/:version/Codec/All',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"read"}), packageService.GetAllCodec);
-app.get('/DVP/API/:version/Codec/Active',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"read"}), packageService.GetAllActiveCodec);
-app.get('/DVP/API/:version/Codec/Active/:type',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"read"}), packageService.GetCodecByType);
+server.post('/DVP/API/:version/Codec',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"write"}), packageService.CreateCodec);
+server.put('/DVP/API/:version/Codec/:codec',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"write"}), packageService.UpdateCodec);
+server.delete('/DVP/API/:version/Codec/:codec',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"delete"}), packageService.DeleteCodec);
+server.get('/DVP/API/:version/Codec/All',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"read"}), packageService.GetAllCodec);
+server.get('/DVP/API/:version/Codec/Active',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"read"}), packageService.GetAllActiveCodec);
+server.get('/DVP/API/:version/Codec/Active/:type',jwt({secret: secret.Secret}), authorization({resource:"codec", action:"read"}), packageService.GetCodecByType);
 
-app.get('/DVP/API/:version/Tenant/Company/BasicInfo', jwt({secret: secret.Secret}), authorization({resource:"tenant", action:"read"}), tenantService.GetBasicCompanyDetailsByTenant);
-app.get('/DVP/API/:version/Tenant/Company/:company', jwt({secret: secret.Secret}), authorization({resource:"tenant", action:"read"}), organisationService.GetOrganisation);
+server.get('/DVP/API/:version/Tenant/Company/BasicInfo', jwt({secret: secret.Secret}), authorization({resource:"tenant", action:"read"}), tenantService.GetBasicCompanyDetailsByTenant);
+server.get('/DVP/API/:version/Tenant/Company/:company', jwt({secret: secret.Secret}), authorization({resource:"tenant", action:"read"}), organisationService.GetOrganisation);
 
-app.put('/DVP/API/:version/Organisation/:company', jwt({secret: secret.Secret}),authorization({resource:"tenant", action:"write"}), organisationService.UpdateOrganisation);
-app.put('/DVP/API/:version/Organisation/:company/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"tenant", action:"write"}), organisationService.AssignPackageToOrganisation);
-app.put('/DVP/API/:version/Organisation/:company/Package/:packageName/Unit/:unitName/:topUpCount', jwt({secret: secret.Secret}),authorization({resource:"tenant", action:"write"}), organisationService.AssignPackageUnitToOrganisation);
-app.put('/DVP/API/:version/Organisation/:company/Activate/:state', jwt({secret: secret.Secret}),authorization({resource:"tenant", action:"write"}), organisationService.ActivateOrganisation);
+server.put('/DVP/API/:version/Organisation/:company', jwt({secret: secret.Secret}),authorization({resource:"tenant", action:"write"}), organisationService.UpdateOrganisation);
+server.put('/DVP/API/:version/Organisation/:company/Package/:packageName', jwt({secret: secret.Secret}),authorization({resource:"tenant", action:"write"}), organisationService.AssignPackageToOrganisation);
+server.put('/DVP/API/:version/Organisation/:company/Package/:packageName/Unit/:unitName/:topUpCount', jwt({secret: secret.Secret}),authorization({resource:"tenant", action:"write"}), organisationService.AssignPackageUnitToOrganisation);
+server.put('/DVP/API/:version/Organisation/:company/Activate/:state', jwt({secret: secret.Secret}),authorization({resource:"tenant", action:"write"}), organisationService.ActivateOrganisation);*/
 
 server.listen(hostPort, hostIp, function () {
     console.log('%s listening at %s', server.name, server.url);

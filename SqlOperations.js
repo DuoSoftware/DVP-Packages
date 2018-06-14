@@ -54,7 +54,7 @@ class SqlFactory {
         });
     }
 
-    ValidateConsoles(consoles)
+    async ValidateConsoles(consoles)
     {
         if(consoles && consoles.length > 0)
         {
@@ -71,36 +71,31 @@ class SqlFactory {
                 query.where.$or.push(tempObj);
             }
 
+            dbModel.Console.findAll(query).then(consoles =>
+            {
+                if(consoles && consoles.length > 0)
+                {
+                    //OK
+                    return consoles.map(c=>{
+                        return c.name;
+                    })
+                }
+                else
+                {
+                    return null;
+                }
+
+            }).catch(err =>
+            {
+                return null;
+            })
+
 
         }
-
-
-
-
-        let e = new EventEmitter();
-        process.nextTick(function () {
-            if (Array.isArray(consoles)) {
-                let count = 0;
-                for (let i in consoles) {
-                    let console = consoles[i];
-                    Console.findOne({consoleName: console}, function(err, console) {
-                        count++;
-                        if (err) {
-                            console.log(err);
-                        }else{
-                            e.emit('validateConsole',console);
-                        }
-                        if(count == consoles.length){
-                            e.emit('endValidateConsoles');
-                        }
-                    });
-                }
-            }else {
-                e.emit('endValidateConsoles');
-            }
-        });
-
-        return (e);
+        else
+        {
+            return null;
+        }
     }
 
 
@@ -303,14 +298,63 @@ class SqlFactory {
         });
     }
 
-    CreatePackage(req, res)
+    async CreatePackage(req, res)
     {
         logger.debug("DVP-UserService.CreateResource Internal method ");
+
+        let jsonString = '';
 
         //NEED TO VALIDATE EVERYTHING FIRST BEFORE SAVING
 
         //VALIDATE CONSOLES
 
+        let consoles  = await this.ValidateConsoles(req.body.consoles);
+
+        if(consoles && consoles.length > 0)
+        {
+            let pkg = dbModel.Package.build({
+                name: req.body.packageName,
+                navigation_type: req.body.navigationType,
+                price: req.body.price,
+                setup_fee: req.body.setupFee,
+                billing_type: req.body.billingType,
+                description: req.body.description
+            });
+
+            pkg
+                .save()
+                .then(function (savePackageResult)
+                {
+                    console.log('dsdsa');
+
+
+                }).catch(function(err)
+            {
+                logger.error('[DVP-RuleService.AddOutboundRule] PGSQL Insert outbound call rule with all attributes query failed', err);
+                callback(err, -1, false);
+            })
+
+
+            /*//VALIDATE RESOURCES
+            ValidateResources(req.body.resources).then(resList =>
+            {
+                //ALL VALIDATIONS OK
+
+
+
+
+            }).catch(err => {
+                //STOP OPERATION
+                jsonString = messageFormatter.FormatMessage(new Error('Resource validation failed'), "Resource validation failed", false, undefined);
+                res.end(jsonString);
+            })*/
+        }
+        else
+        {
+            //STOP OPERATION
+            jsonString = messageFormatter.FormatMessage(new Error('Console validation failed'), "Console validation failed", false, undefined);
+            res.end(jsonString);
+        }
 
 
 
@@ -320,11 +364,7 @@ class SqlFactory {
 
 
 
-
-
-
-
-        logger.debug("DVP-UserService.CreateResource Internal method ");
+        /*logger.debug("DVP-UserService.CreateResource Internal method ");
         let jsonString;
 
         let vPackage = VPackage({
@@ -381,7 +421,7 @@ class SqlFactory {
                 });
             });
 
-        });
+        });*/
     }
 
     UpdatePackage(req, res){
